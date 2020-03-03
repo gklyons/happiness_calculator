@@ -8,8 +8,17 @@
 
 import UIKit
 
+let notificationKey = Notification.Name(rawValue: "didChangeHappiness")
+
 class EntryListTableViewController: UITableViewController {
 
+    var averageHappiness: Int = 0 {
+        //Poperty Observer
+        didSet {
+            NotificationCenter.default.post(name: notificationKey, object: self.averageHappiness)
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
     }
@@ -28,7 +37,27 @@ class EntryListTableViewController: UITableViewController {
         let entry = EntryController.entries[indexPath.row]
         cell.setEntry(entry: entry, averageHappiness: 0 )
     
+        cell.delegate = self
 
         return cell
+    }
+    
+    func updateAverageHappiness() {
+        var totalHappiness = 0
+        for entry in EntryController.entries {
+            if entry.isIncluded {
+                totalHappiness += entry.happiness
+            }
+        }
+        averageHappiness = totalHappiness / EntryController.entries.count
+    }
+}
+
+extension EntryListTableViewController: EntryTableViewCellDelegate {
+    func switchedToggledOnCell(cell: EntryTableViewCell) {
+        guard let entry = cell.entry else {return}
+        EntryController.updateEntry(entry: entry)
+        updateAverageHappiness()
+        cell.updateUI(aberageHappiness: averageHappiness)
     }
 }
